@@ -36,7 +36,6 @@ var chatTextResponses = document.getElementById('chatTextResponses');
 
 startCallButton.addEventListener('click', function () {
 	startRTCCall();
-	this.disabled = true;
 });
 
 
@@ -60,7 +59,7 @@ var createSignalingChannel = function (endpoint) {
 
 var getAndSendMessage = function (input) {
 		var messageText = chatTextInput.value;
-		rtcSendChannel.send(messageText);
+		dataChannel.send(messageText);
 		chatTextInput.value = '';
 }
 
@@ -83,7 +82,10 @@ var parseAndDisplayMessage = function (messageEvent) {
 
 	chatTextResponses.appendChild(messageNode);
 
+}
 
+var dataChannelReady = function () {
+	chatTextInput.disabled = false;
 }
 
 // ----------------------------------------------------
@@ -99,8 +101,6 @@ var parseAndDisplayMessage = function (messageEvent) {
 var localDescriptionCreated = function (description) {
 
 	peerConnection.setLocalDescription(description);
-
-
 
 	signalingChannel.send(JSON.stringify({
 		"sdp" : peerConnection.localDescription
@@ -121,6 +121,8 @@ var logErrors = function (error) {
 var startRTCCall = function () {
 
 	// console.log("start the call");
+	startCallButton.disabled = true;
+
 
 	peerConnection = new RTCPeerConnection(iceServers, optionalRtpDataChannels);
 
@@ -140,6 +142,9 @@ var startRTCCall = function () {
 
 	dataChannel.addEventListener('message', parseAndDisplayMessage);
 
+	dataChannel.addEventListener('open', dataChannelReady);
+
+
 
 	// the peerConnection will immediately start gathering Ice candidates
 
@@ -150,11 +155,6 @@ var startRTCCall = function () {
 				"candidates": evt.candidate
 			}));
 		}
-	});
-
-
-	peerConnection.addEventListener('datachannel', function (evt) {
-		console.log("data channel ready");
 	});
 
 	peerConnection.createOffer(localDescriptionCreated, logErrors);
