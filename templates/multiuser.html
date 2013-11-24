@@ -1,0 +1,31 @@
+<html>
+<head>
+	<title>PeerChat</title>
+</head>
+<body>
+
+
+	<ul id="peerList"></ul>
+	
+	
+	<h2>Say Something:</h2>
+	<input type="text" id="chatTextInput"></input>
+
+	<br />
+	<h2>Responses:</h2>
+	<ul id="chatTextResponses">
+
+	</ul>
+
+	<br />
+
+
+	<button id="startCallButton">Start Call</button>
+
+
+	<script src="{{ url_for('static', filename='javascript/adapter.js') }}" type="text/javascript"></script>
+	<script src="{{ url_for('static', filename='javascript/multiuser.js') }}" type="text/javascript"></script>
+ 
+
+</body>
+</html>
