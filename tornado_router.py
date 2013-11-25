@@ -43,10 +43,31 @@ class Dispatcher(object):
 	def route_message(self, message):
 		self.websockets[json.loads(message)['RecipientID']].write_message(message)
 
+		
+		
+class RTCmanager(object):
+	def __init__(self, dispatcher):
+		pass
+
+	def connect_users(userid1, userid2):
+		connection_message = {
+			"SenderID" : "Server",
+			"RecipientID" : useid1,
+			"Instructions" : {
+				"Command" : "startRTCConnection",
+				"targetPeerID" : userid2
+			}
+		}
+
+		message_payload = json.dumps(connection_message)
+
+		return message_payload
+
+
+# should the RTCmanager get a reference to the dispatcher or does that logic go in the route controller in Tornado?
 
 
 dispatcher = Dispatcher()
-
 
 
 class WSHandler(tornado.websocket.WebSocketHandler):
@@ -72,12 +93,6 @@ class MainHandler(tornado.web.RequestHandler):
 
 		self.write(rendered_template)
 
-
-class RTCBounceHandler(tornado.web.RequestHandler):
-	def get(self):
-		self.userid = self.get_cookie('userid')
-
-	
 
 
 application = tornado.web.Application([

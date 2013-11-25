@@ -8,9 +8,37 @@
 
 	<script>
 
+		var dbg = [];
+
+		// debugging buckets
+
+
 		var peerConnections = {};
 
+		var dataChannels = {};
+
+		var currentPeer;
+
+		var localDescriptionCreated = function (description) {
+
+			peerConnection.setLocalDescription(description);
+
+			// TODO: a convenience function on eventer that uses an associated peer connection to auto-generate messages routed to the correct peer
+
+			// console.log("localDescription: ", peerConnection.localDescription);
+
+			eventer.send(currentPeer, {
+				"Command" : "handshake",
+				"Body" : {
+					"RemotePeerID" : userid,
+					"sdp" : peerConnection.localDescription
+				}
+			});
+		}
+
 		var startRTCConnection = function (targetPeerID) {
+ 			currentPeer = targetPeerID;
+
 			// -----------------------------------
 			// not sure where this code goes     
 			// -----------------------------------
@@ -24,35 +52,110 @@
 
 			peerConnections[targetPeerID] = peerConnection;
 
-			var dataChannel = peerConnection.createDataChannel('RTCDataChannel', {reliable: false
-			});
 
-			alert('dataChannel: ' + dataChannel);
+			var dataChannel = peerConnection.createDataChannel('RTCDataChannel', {reliable: false});
+
+			// debug so hard
+			window.dataChannel = dataChannel;
+
+
+			dataChannel.onopen = function (m) {
+				dataChannels[targetPeerID] = this;
+				console.log('datachannel open');
+			}
+
+			dataChannel.onmessage = function (m) {
+				console.log(m);
+			}
+
+
+			peerConnection.onicecandidate = function (candidate) {
+				eventer.send(targetPeerID, {
+					"Command" : "handshake",
+					"Body" : {
+						"RemotePeerID" : userid,
+						"candidate" : candidate
+					}
+				});
+			}
+
+			peerConnection.createOffer(localDescriptionCreated, logErrors);
+
 		}
 
-
+		// make my life easier, this should be moved somewhere else later
+		var logErrors = function (error) {
+			console.log(error);
+		}
 
 		var ServerEventHandler = function (id, route) {
 			var websocket = new WebSocket("ws" + document.location.origin.substring(4) + "/" + route);
 
+			var handshakeManager = function (message) {
+
+				var RemotePeerID = message.RemotePeerID;
+
+				if (!(RemotePeerID in peerConnections)) {
+					// we do not have a peerConnection counterpoint to this caller, make a new one and connect to him
+					startRTCConnection(RemotePeerID);
+
+				} else {
+					// console.log("oh we've seen " + RemotePeerID + "before.");
+				}
+
+				var peerConnection = peerConnections[RemotePeerID];
+
+				console.log("message");
+				console.log(message);
+
+				if (message.sdp) {
+					var remoteSessionDescription = new RTCSessionDescription(message.sdp);
+					// should this callback be defined elsewhere?
+					var setRemoteDescriptionCallback = function () {
+						if (peerConnection.remoteDescription.type==="offer") {
+							peerConnection.createAnswer(localDescriptionCreated, logErrors);
+						}
+					}
+					peerConnection.setRemoteDescription(remoteSessionDescription, setRemoteDescriptionCallback, logErrors);
+
+				} else if (message.candidate.candidate) {
+					var icecandidate = new RTCIceCandidate(message.candidate.candidate);
+					peerConnection.addIceCandidate(icecandidate);
+				} else {
+
+					console.log("non sdp message");
+				}
+
+
+			}
+
+			// command should be "channel"
 			var wsEventsDict = {
 				"alert" : function (message) {alert(message);},
 				"log" : function (message) {console.log(message);},
 				"startRTCConnection" : function (targetPeerID) {
 					startRTCConnection(targetPeerID);
-				}
+				},
+
+				"handshake" : handshakeManager
 			}
 
 			var wsEventsHandler = function (event) {
+				// add new websocket events to our debugger array so we can inspect them later
+
+				dbg.push(event);
+
 				var Instructions = JSON.parse(event.data).Instructions;
 
 				if (Instructions.Command in wsEventsDict) {
 					wsEventsDict[Instructions.Command](Instructions.Body);
 				} else {
+					console.log(event.data);
 					console.log(Instructions.Command + " is not a registered event");
 				}
 
 			}
+
 
 			var websocketEventHandlers = websocket.addEventListener('message', wsEventsHandler);
 
@@ -75,8 +178,9 @@
 
 	<script>
 		var userid = "{{userid}}";
+		var signalChannel = "signalsocket";
 	
-		var eventer = new ServerEventHandler(userid, "signalsocket");
+		var eventer = new ServerEventHandler(userid, signalChannel);
 	</script>
 
 
