@@ -1,31 +1,4 @@
-<html>
-<head>
-	<title>Admin</title>
-</head>
-<body>
-	<h1>Admin Page</h1>
-
-	<h2>Users:</h2>
-	<ol id="usersList">
-
-	</ol>
-
-
-	<br />
-
-	<p>Connect Users:</p>
-	<ol>
-		<li><input id="userid1" name="userid1"></input></li>
-
-		<li><input id="userid2" name="userid2"></input></li>
-	</ol>
-
-	<button id="connectUsers">Connect Users</button>
-
-
-	<script type="text/javascript">
-
-		var usersList = document.getElementById('usersList');
+var usersList = document.getElementById('usersList');
 		var connectUsersButton = document.getElementById('connectUsers');
 
 		var websocket = new WebSocket("ws" + document.location.origin.substring(4) + "/" + "adminsocket");
@@ -91,26 +64,10 @@
 
 
 
-
 		var wsOnOpen = websocket.addEventListener('open', wsOnOpen);
 		var wsOnClose = websocket.addEventListener('close', wsOnClose);
 		var wsOnMessage = websocket.addEventListener('message', wsOnMessage);
-
-
-
 		var connectUsersHandler = connectUsersButton.addEventListener('click', connectUsers);
-
 		var UIState = "unconnected";
-
-
 		var UIStateMachine = {
-
 		}
-
-
-
-
-
-	</script>
-
-</body>

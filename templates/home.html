@@ -1,0 +1,48 @@
+<html>
+<head>
+	<title>Tornado Template</title>
+</head>
+<body>
+	<h2>userid: {{userid}}</h2>
+
+
+	<h2>Data From Server:</h2>
+
+	<ol id="serverSentData">
+
+	</ol>
+
+
+	<h2>Data From Peers:</h2>
+
+	<ol id="peerSentData">
+
+	</ol>
+
+
+	<script src="{{static_url('javascript/eventer.js')}}" type="text/javascript"></script>
+
+
+
+	<script>
+		var ajax = function (route, method, data, callback) {
+			var xmlhttp = new XMLHttpRequest();
+			xmlhttp.onreadystatechange = function () {
+				if (xmlhttp.readyState===4 && xmlhttp.status===200) {
+					callback(xmlhttp.responseText);
+				}
+			}
+			xmlhttp.open(method, route, true);
+			xmlhttp.send();
+		}
+
+		var userid = "{{userid}}";
+
+		var signalChannel = "signalsocket";
+	
+		var eventer = new ServerEventHandler(userid, signalChannel);
+	</script>
+
+
+</body>
+</html>
