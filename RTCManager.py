@@ -32,6 +32,8 @@ class Master(object):
 
 
 
+
+
 class Dispatcher(object):
 	def __init__(self):
 		self.websockets = {}
@@ -44,6 +46,7 @@ class Dispatcher(object):
 
 	def route(self, message, recipient):
 		self.websockets[recipient].write_message(message)
+
 
 
 
@@ -66,6 +69,7 @@ class DataManager(object):
 
 
 
+
 class PeerConnectionManager(object):
 	def __init__(self):
 		self.peers = {}
@@ -78,6 +82,10 @@ class PeerConnectionManager(object):
 		self.peers.pop(userid)
 		for peer_list in self.peers.values():
 			peer_list.remove(userid)
+
+
+
+
 
 
 	# def register_peer_connection(self, userid1, userid2):

@@ -1,7 +1,11 @@
-import json
-from random import choice
-
 from RTCManager import Master, Dispatcher, DataManager, PeerConnectionManager, get_random_id
+
+import json
+import sqlite3
+import os
+
+conn = sqlite3.connect(os.path.join('static', 'campaign_finance_data.db'))
+
 
 
 import tornado.httpserver
@@ -11,7 +15,10 @@ import tornado.web
 import tornado.options
 from tornado import template
 
-import os
+
+
+
+
 
 
 
@@ -21,7 +28,11 @@ peerconnectionmanager = PeerConnectionManager()
 
 master = Master(dispatcher, datamanager, peerconnectionmanager)
 
-
+def get_zipcode_contributions(zipcode):
+	c = conn.cursor()
+	query = c.execute('''SELECT i.Contrib, SUM(i.Amount), c.FirstLastP, c.Party FROM Individuals i JOIN Candidates c ON (i.RecipID=c.CID) WHERE i.Zip=? GROUP BY i.Contrib''', (zipcode,))
+	return c.fetchall()
+	
 
 # -------------------------------------------------
 class MainHandler(tornado.web.RequestHandler):
@@ -31,7 +42,13 @@ class MainHandler(tornado.web.RequestHandler):
 			self.userid = get_random_id(10)
 			self.set_cookie('userid', self.userid)
 
-		self.render("home.html", userid=self.userid)
+
+		# for now limit users to 10 zipcodes
+
+		zipcodes = ['06830', '90210', '60045', '06880','10022',
+						'60093', '07901', '30327', '78746','90272']
+
+		self.render("home.html", userid=self.userid, datasets=zipcodes)
 
 
 class SignalSocketHandler(tornado.websocket.WebSocketHandler):
@@ -39,7 +56,6 @@ class SignalSocketHandler(tornado.websocket.WebSocketHandler):
 		self.userid = self.get_cookie('userid')
 		master.register_websocket(self.userid, self)
 		# master.register_peer(self.userid)
-
 
 	def on_close(self):
 		master.unregister_websocket(self.userid)
@@ -53,10 +69,11 @@ class SignalSocketHandler(tornado.websocket.WebSocketHandler):
 
 class DataRequestRoute(tornado.web.RequestHandler):
 	def get(self):
-		self.write(json.dumps({'data':"hello world from the ajax server"}))
+		desired_zipcode = self.get_argument('zipcode')
+		dataset = get_zipcode_contributions(desired_zipcode)
+		self.write(json.dumps(dataset))
 
-
-
+		
 
 class AdminRoute(tornado.web.RequestHandler):
 	def get(self):
@@ -82,8 +99,6 @@ class LoginRoute(tornado.web.RequestHandler):
 
 	def post(self):
 		pass
-
-
 
 
 

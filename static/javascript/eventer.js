@@ -59,6 +59,9 @@ var logErrors = function (error) {
 	console.log(error);
 }
 
+
+
+// eventer's signalling channel should be abstracted so that it can use longpolling etc
 var ServerEventHandler = function (id, route) {
 	var websocket = new WebSocket("ws" + document.location.origin.substring(4) + "/" + route);
 
