@@ -38,6 +38,16 @@
 
 
 	<script>
+
+		var addListItem = function (listElement, itemString) {
+			var listItemNode = document.createElement('li');
+			var listItemInformation = document.createElement('p');
+			listItemInformation.innerText = itemString;
+			listItemNode.appendChild(listItemInformation);
+			listElement.appendChild(listItemNode);
+		}
+
+
 		var dictToParams = function (dict) {
 			var params = [];
 			for (var param in dict) {
@@ -70,6 +80,7 @@
 				element.removeChild(element.children[0]);
 			}
 		}
+
 	</script>	
 
 
@@ -84,6 +95,25 @@
 
 
 	<script>
+
+	var StorageDB = function () {
+		this.engine = {};
+	}
+
+	StorageDB.prototype.store = function(key, value) {
+		this.engine[key] = value;
+		return true;
+	};
+
+	StorageDB.prototype.retrieve = function(key) {
+		return this.engine[key];
+	};
+
+	</script>
+
+
+
+	<script>
 		// UI Code
 
 		// ----------------------------------------------------------
@@ -93,6 +123,14 @@
 		var datasetSelector = document.getElementById('datasets');
 		var getDatasetButton = document.getElementById('getDatasetButton');
 		var currentDatasetList = document.getElementById('currentDatasetList');
+
+		// ----------------------------------------------------------
+
+
+		var localDataSets = new StorageDB();
+
+
+		// ----------------------------------------------------------
 
 
 
@@ -113,14 +151,21 @@
 
 
 
+
+
 		var getDataEL = getDatasetButton.addEventListener('click', function () {
 			var dataset = datasetSelector.value;
 
 			ajax('/dataroute', "GET", {"zipcode": dataset}, function (data) {
-				var parsedData = JSON.parse(data);
+				if  (data==="peer_reroute") {
+					
+				} else {
 
-				updateListView(parsedData, currentDatasetList);
-
+					localDataSets.store(dataset, data);
+					addListItem(serverSentData, dataset);
+					var parsedData = JSON.parse(data);
+					updateListView(parsedData, currentDatasetList);
+				}
 			});
 		});
 

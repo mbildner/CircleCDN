@@ -26,18 +26,17 @@ var startRTCConnection = function (targetPeerID) {
 	peerConnection = new webkitRTCPeerConnection(iceServers, optionalRtpDataChannels);
 	peerConnections[targetPeerID] = peerConnection;
 	var dataChannel = peerConnection.createDataChannel('RTCDataChannel', {reliable: false});
-	// debug so hard
-	window.dataChannel = dataChannel;
 
-
-	dataChannel.onopen = function (m) {
+	var dataChannelOpenHandler = dataChannel.addEventListener('open', function (m) {
 		dataChannels[targetPeerID] = this;
 		console.log('datachannel open');
-	}
 
-	dataChannel.onmessage = function (m) {
+	})
+
+
+	var dataChannelMessageHandler = dataChannel.addEventListener('message', function (m) {
 		console.log(m);
-	}
+	});
 
 
 	peerConnection.onicecandidate = function (candidate) {
@@ -52,6 +51,8 @@ var startRTCConnection = function (targetPeerID) {
 
 	peerConnection.createOffer(localDescriptionCreated, logErrors);
 
+	// return the datachannel so we can add event listeners to it in the caller code
+	return dataChannel;
 }
 
 // make my life easier, this should be moved somewhere else later
@@ -112,7 +113,6 @@ var ServerEventHandler = function (id, route) {
 	}
 
 	var wsEventsHandler = function (event) {
-		// add new websocket events to our debugger array so we can inspect them later
 
 		var Instructions = JSON.parse(event.data).Instructions;
 
@@ -123,6 +123,7 @@ var ServerEventHandler = function (id, route) {
 			console.log(Instructions.Command + " is not a registered event");
 		}
 	}
+
 	var websocketEventHandlers = websocket.addEventListener('message', wsEventsHandler);
 
 	this.send = function (recipient, message) {

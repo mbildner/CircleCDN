@@ -1,9 +1,11 @@
 from RTCManager import Master, Dispatcher, DataManager, PeerConnectionManager, get_random_id
 
 import json
-import sqlite3
 import os
+from random import choice
 
+# remove database imports and logic to wrapped up functions elsewhere
+import sqlite3
 conn = sqlite3.connect(os.path.join('static', 'campaign_finance_data.db'))
 
 
@@ -18,15 +20,11 @@ from tornado import template
 
 
 
-
-
-
-
 dispatcher = Dispatcher()
 datamanager = DataManager()
 peerconnectionmanager = PeerConnectionManager()
 
-master = Master(dispatcher, datamanager, peerconnectionmanager)
+master = Master(dispatcher, peerconnectionmanager, datamanager)
 
 def get_zipcode_contributions(zipcode):
 	c = conn.cursor()
@@ -61,7 +59,6 @@ class SignalSocketHandler(tornado.websocket.WebSocketHandler):
 		master.unregister_websocket(self.userid)
 		# master.unregister_peer(self.userid)
 
-
 	def on_message(self, message):
 		master.handle_message(message)
 
@@ -69,11 +66,25 @@ class SignalSocketHandler(tornado.websocket.WebSocketHandler):
 
 class DataRequestRoute(tornado.web.RequestHandler):
 	def get(self):
-		desired_zipcode = self.get_argument('zipcode')
-		dataset = get_zipcode_contributions(desired_zipcode)
-		self.write(json.dumps(dataset))
+		userid = self.get_cookie('userid')
+		dataset_id = self.get_argument('zipcode')
 
-		
+		serving_peers = master.datamanager.get_serving_peers(dataset_id)
+
+		if not serving_peers:
+			dataset = get_zipcode_contributions(dataset_id)
+
+			self.write(json.dumps(dataset))
+
+			master.datamanager.register_dataset(dataset_id)
+			master.datamanager.register_serving_peer(dataset_id, userid)
+
+		else:
+			serving_peer = choice(serving_peers)
+			master.connect_users(userid, serving_peer)
+			# where does this code go? -- we are telling the user that its request is being rerouted to a peer, is that opaque? transparent?
+			self.write("peer_reroute")
+
 
 class AdminRoute(tornado.web.RequestHandler):
 	def get(self):
