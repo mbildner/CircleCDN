@@ -10,8 +10,12 @@ var dictToParams = function (dict) {
 	return window.encodeURI(paramString);
 }
 
+
+
 var ajax = function (route, method, data, callback) {
+
 	var xmlhttp = new XMLHttpRequest();
+
 	xmlhttp.onreadystatechange = function () {
 		if (xmlhttp.readyState===4 && xmlhttp.status===200) {
 			callback(xmlhttp.responseText);
@@ -23,6 +27,8 @@ var ajax = function (route, method, data, callback) {
 	xmlhttp.open(method, route, true);
 	xmlhttp.send();
 }
+
+
 
 
 var clearElement = function (element) {

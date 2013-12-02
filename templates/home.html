@@ -36,8 +36,21 @@
 
 	<script src="{{static_url('javascript/eventer.js')}}" type="text/javascript"></script>
 
+	<script src="{{static_url('javascript/circle.js')}}" type="text/javascript"></script>
+
+
 
 	<script>
+
+		var addListItem = function (listElement, itemString) {
+			var listItemNode = document.createElement('li');
+			var listItemInformation = document.createElement('p');
+			listItemInformation.innerText = itemString;
+			listItemNode.appendChild(listItemInformation);
+			listElement.appendChild(listItemNode);
+		}
+
+
 		var dictToParams = function (dict) {
 			var params = [];
 			for (var param in dict) {
@@ -70,6 +83,7 @@
 				element.removeChild(element.children[0]);
 			}
 		}
+
 	</script>	
 
 
@@ -84,6 +98,25 @@
 
 
 	<script>
+
+	var StorageDB = function () {
+		this.engine = {};
+	}
+
+	StorageDB.prototype.store = function(key, value) {
+		this.engine[key] = value;
+		return true;
+	};
+
+	StorageDB.prototype.retrieve = function(key) {
+		return this.engine[key];
+	};
+
+	</script>
+
+
+
+	<script>
 		// UI Code
 
 		// ----------------------------------------------------------
@@ -93,6 +126,14 @@
 		var datasetSelector = document.getElementById('datasets');
 		var getDatasetButton = document.getElementById('getDatasetButton');
 		var currentDatasetList = document.getElementById('currentDatasetList');
+
+		// ----------------------------------------------------------
+
+
+		var localDataSets = new StorageDB();
+
+
+		// ----------------------------------------------------------
 
 
 
@@ -112,22 +153,37 @@
 		}
 
 
-
 		var getDataEL = getDatasetButton.addEventListener('click', function () {
 			var dataset = datasetSelector.value;
 
 			ajax('/dataroute', "GET", {"zipcode": dataset}, function (data) {
-				var parsedData = JSON.parse(data);
 
-				updateListView(parsedData, currentDatasetList);
+				var parsedData = JSON.parse(data);
+				var command = parsedData.Instructions.Command;
+				var body = parsedData.Instructions.Body;
+
+				if (command==="dataResponse") {
+					localDataSets.store(dataset, body);
+					addListItem(serverSentData, dataset);
+					updateListView(body, currentDatasetList);
+
+				} else if (command==="redirectToPeer") {
+					var callbackFunction = function (message) {
+						localDataSets.store(dataset, message);
+						addListItem(peerSentData, dataset);
+						updateListView(message, currentDatasetList);
+					}
+
+
+					var request = new PeerResourceRequest(body, dataset, callbackFunction);
+
+
+				} else {
+					console.log('did not recognize command ', parsedData);
+				}
 
 			});
 		});
-
-
-
-		
-
 
 
 	</script>

@@ -1,8 +1,64 @@
-// extract the handlerDict and pass it into the eventer at construciton time
+// extract the handlerDict and pass it into the eventer at construction time
 
 var peerConnections = {};
 var dataChannels = {};
 var currentPeer;
+
+
+// we need a consistent interface to handle the datachannel messages like we have for the websocket, for now abstract it to here and we can fix it later
+
+var handlePeerMessage = function (m, dataChannel) {
+
+	var message = JSON.parse(m.data);
+
+	if (message.Instructions.Command==='resourceRequest') {
+		var dataset = localDataSets.retrieve(message.Instructions.Body);
+
+		var response = {
+			"SenderID": userid,
+			"RecipientID" : message.SenderID,
+			"Instructions" : {
+				"Command" : 'resourceResponse',
+				"Body" : dataset.slice(0, 10)
+			}
+		}
+
+		var responsePackage = JSON.stringify(response);
+		dataChannel.send(responsePackage);
+
+	} else if (message.Instructions.Command==='resourceResponse') {
+		// var dataset = JSON.parse(message.Body);
+		var dataset = message.Instructions.Body;
+		// console.log(dataset);
+	} else {
+		// console.log(m);
+	}
+
+};
+
+
+
+
+// 
+
+
+
+
+
+var breakRTCConnection = function (targetPeerID) {
+	if (targetPeerID in peerConnections) {
+		dataChannels[targetPeerID].close();
+		delete dataChannels[targetPeerID];
+		peerConnections[targetPeerID].close();
+		delete peerConnections[targetPeerID];
+		console.log('peer connection ' + targetPeerID + ' closed');
+	} else {
+		console.log("server ordered us to break RTC connection with " + targetPeerID + ", but no such connection exists");
+	}
+	return;
+};
+
+
 var localDescriptionCreated = function (description) {
 	peerConnection.setLocalDescription(description);
 	// TODO: a convenience function on eventer that uses an associated peer connection to auto-generate messages routed to the correct peer
@@ -26,18 +82,17 @@ var startRTCConnection = function (targetPeerID) {
 	peerConnection = new webkitRTCPeerConnection(iceServers, optionalRtpDataChannels);
 	peerConnections[targetPeerID] = peerConnection;
 	var dataChannel = peerConnection.createDataChannel('RTCDataChannel', {reliable: false});
-	// debug so hard
-	window.dataChannel = dataChannel;
 
-
-	dataChannel.onopen = function (m) {
+	var dataChannelOpenHandler = dataChannel.addEventListener('open', function (m) {
 		dataChannels[targetPeerID] = this;
 		console.log('datachannel open');
-	}
 
-	dataChannel.onmessage = function (m) {
-		console.log(m);
-	}
+	});
+
+	var dataChannelMessageHandler = dataChannel.addEventListener('message', function (m) {
+		// pass in a reference to the datachannel so the callback can respond to sender.
+		handlePeerMessage(m, this);
+	});
 
 
 	peerConnection.onicecandidate = function (candidate) {
@@ -48,16 +103,18 @@ var startRTCConnection = function (targetPeerID) {
 				"candidate" : candidate
 			}
 		});
-	}
+	};
 
 	peerConnection.createOffer(localDescriptionCreated, logErrors);
 
-}
+	// return the datachannel so we can add event listeners to it in the caller code
+	return dataChannel;
+};
 
 // make my life easier, this should be moved somewhere else later
 var logErrors = function (error) {
 	console.log(error);
-}
+};
 
 
 
@@ -107,12 +164,13 @@ var ServerEventHandler = function (id, route) {
 		"startRTCConnection" : function (targetPeerID) {
 			startRTCConnection(targetPeerID);
 		},
-
+		"breakRTCConnection" : function (targetPeerID) {
+			breakRTCConnection(targetPeerID);
+		},
 		"handshake" : handshakeManager
 	}
 
 	var wsEventsHandler = function (event) {
-		// add new websocket events to our debugger array so we can inspect them later
 
 		var Instructions = JSON.parse(event.data).Instructions;
 
@@ -123,6 +181,7 @@ var ServerEventHandler = function (id, route) {
 			console.log(Instructions.Command + " is not a registered event");
 		}
 	}
+
 	var websocketEventHandlers = websocket.addEventListener('message', wsEventsHandler);
 
 	this.send = function (recipient, message) {

@@ -1,0 +1,12 @@
+eventer_protocol = {
+	"SenderID" : 'string',
+	"RecipientID" : 'string',
+	"Instructions" : {
+		"Command" : 'string',
+		"Body" : 'string'
+	}
+}
+
+
+
+
