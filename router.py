@@ -42,8 +42,7 @@ class MainHandler(tornado.web.RequestHandler):
 
 		# for now limit users to 10 zipcodes
 
-		zipcodes = ['06830', '90210', '60045', '06880','10022',
-						'60093', '07901', '30327', '78746','90272']
+		zipcodes = ['06830', '90210', '60045', '06880','10022','60093', '07901', '30327', '78746','90272']
 
 		self.render("home.html", userid=self.userid, datasets=zipcodes)
 
