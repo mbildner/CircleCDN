@@ -1,6 +1,7 @@
 import json
 from random import choice
 
+
 def get_random_id(length):
 	# rand_char_string = "0123456789abcdefghijklmnopqrstuvwxyz"
 	rand_char_string = "abcdefghijklmnopqrstuvwxyz"

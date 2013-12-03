@@ -1,5 +1,5 @@
 var PeerResourceRequest = function (targetPeerID, resourceID, callback) {
-	var data;
+
 
 	var request = {
 		"SenderID" : userid,
@@ -9,6 +9,8 @@ var PeerResourceRequest = function (targetPeerID, resourceID, callback) {
 			"Body" : resourceID
 		}
 	}
+
+	
 
 	var dataChannel = startRTCConnection(targetPeerID);
 

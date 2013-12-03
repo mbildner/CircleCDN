@@ -38,13 +38,6 @@ var handlePeerMessage = function (m, dataChannel) {
 
 
 
-
-// 
-
-
-
-
-
 var breakRTCConnection = function (targetPeerID) {
 	if (targetPeerID in peerConnections) {
 		dataChannels[targetPeerID].close();
