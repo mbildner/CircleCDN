@@ -8,6 +8,7 @@ var currentPeer;
 // we need a consistent interface to handle the datachannel messages like we have for the websocket, for now abstract it to here and we can fix it later
 
 var handlePeerMessage = function (m, dataChannel) {
+	console.log('got peer message');
 
 	var message = JSON.parse(m.data);
 
@@ -30,9 +31,9 @@ var handlePeerMessage = function (m, dataChannel) {
 		// var dataset = JSON.parse(message.Body);
 		var dataset = message.Instructions.Body;
 		// console.log(dataset);
-	} else {
-		// console.log(m);
 	}
+
+	
 
 };
 
