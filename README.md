@@ -4,7 +4,7 @@ _This README describes some fuzzy area between what the framework is _designed_ 
 
 CircleCDN is a full stack project to permit a web server to offload serving its resources to its clients.  The next time your site hits the top of hacker news, let your users take care of serving each other. 
 
-This project is primarily intended as a big experiment to use a few fun new browser APIs.  Because these tools are so new, cross browser support is... awful.  For now, the project aims to support Chrome browsers only.  Firefox support will come soon.  (IE support is already here! just use a [Chrome frame](https://developers.google.com/chrome/chrome-frame/) to mitigate the suck!)
+This project is primarily intended as a big experiment to use a few fun new browser APIs. Because these tools are so new, cross browser support is... awful. For now, the project aims to support Chrome browsers only, with Firefox targeted soon after. (Note: a branch of this project is being built to support Firefox, but because the webrtc-datachannel apis are so new and so broken, the two will not be integrated for some time.)
 
 ## How it Works:
 
