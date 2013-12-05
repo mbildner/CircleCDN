@@ -1,6 +1,5 @@
 var PeerResourceRequest = function (targetPeerID, resourceID, callback) {
 
-
 	var request = {
 		"SenderID" : userid,
 		"RecipientID": targetPeerID,
@@ -10,8 +9,7 @@ var PeerResourceRequest = function (targetPeerID, resourceID, callback) {
 		}
 	}
 
-	
-
+	// rename to reliableChannel
 	var dataChannel = startRTCConnection(targetPeerID);
 
 	var dataChannelListener = dataChannel.addEventListener('open', function (event) {
@@ -25,15 +23,3 @@ var PeerResourceRequest = function (targetPeerID, resourceID, callback) {
 	});
 
 }
-
-
-
-// cadence: 
-
-// request resource
-// get peer redirect Command
-// request connection
-// 		register onopen function to send data request
-// on open send data request
-// process request
-// register with the server as a servable peer?

@@ -1,3 +1,12 @@
+var addListItem = function (listElement, itemString) {
+	var listItemNode = document.createElement('li');
+	var listItemInformation = document.createElement('p');
+	listItemInformation.innerText = itemString;
+	listItemNode.appendChild(listItemInformation);
+	listElement.appendChild(listItemNode);
+}
+
+
 var dictToParams = function (dict) {
 	var params = [];
 	for (var param in dict) {
@@ -11,11 +20,8 @@ var dictToParams = function (dict) {
 }
 
 
-
 var ajax = function (route, method, data, callback) {
-
 	var xmlhttp = new XMLHttpRequest();
-
 	xmlhttp.onreadystatechange = function () {
 		if (xmlhttp.readyState===4 && xmlhttp.status===200) {
 			callback(xmlhttp.responseText);
@@ -31,24 +37,9 @@ var ajax = function (route, method, data, callback) {
 
 
 
+
 var clearElement = function (element) {
 	while (element.children.length > 0) {
 		element.removeChild(element.children[0]);
 	}
-}
-
-
-var updateListView = function (array, listElement) {
-	clearElement(listElement);
-
-	array.forEach(function (record) {
-		var listNode = document.createElement('li');
-		var dataNode = document.createElement('p');
-
-		// probably should have an argument here for a record filtering callback.
-		dataNode.textContent = JSON.stringify(record);
-
-		listNode.appendChild(dataNode);
-		listElement.appendChild(listNode);
-	});
 }

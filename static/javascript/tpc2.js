@@ -1,14 +1,7 @@
-
-
 var ReliableChannel = function (channel) {
 	var channel = channel;
 
-	var channelOpenListener = channel.addEventListener('open', function (event) {
-		var channelOpenEvent = new CustomEvent('open', {"detail": {'channelOpen':true}});
-		this.dispatchEvent(channelOpenEvent);
-	});
-
-	var newMessageListener = channel.addEventListener('message', handleMessage);
+	var newMessageListener = channel.addEventListener('message', receiveMessage);
 
 	var RebuiltMessage = function (index) {
 		var index = index;
@@ -56,6 +49,7 @@ var ReliableChannel = function (channel) {
 		return JSON.stringify(pkg);
 	}
 
+
 	var send = function (recipient, message) {
 		channel.send(messagePacker(recipient, 'START', message.length));
 		chunkMessage(message).forEach(function (chunk, index) {
@@ -64,36 +58,14 @@ var ReliableChannel = function (channel) {
 		channel.send(messagePacker(recipient, 'STOP', ''));
 	}
 
+
 	var messageHolder;
 	var eventListenerHolder;
 
-	var handleMessage = function (m) {
-		var message = JSON.parse(m.data);
+	var receiveMessage = function (event) {
+		var parsedData = JSON.parse(event.data);
 
-		if (message.Instructions.Command==='resourceRequest') {
-			var dataset = localDataSets.retrieve(message.Instructions.Body);
-
-			var response = {
-				"SenderID": userid,
-				"RecipientID" : message.SenderID,
-				"Instructions" : {
-					"Command" : 'resourceResponse',
-					"Body" : dataset
-				}
-			}
-
-			var responsePackage = JSON.stringify(response);
-
-			send(responsePackage);
-
-		} else if (message.Instructions.Command==='packedMessage') {
-			receiveMessage(message);
-		}
-	}
-
-
-	var receiveMessage = function (message) {
-		var messagePiece = message.Instructions.Body;
+		var messagePiece = parsedData.Instructions.Body;
 
 		if (messagePiece.info==='START') {
 
@@ -111,9 +83,13 @@ var ReliableChannel = function (channel) {
 		}
 	}
 
+
+
+
 	this.close = channel.close;	
 	this.send = send;
 
 	return this;
+
 
 }

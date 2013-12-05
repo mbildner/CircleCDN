@@ -7,35 +7,33 @@ var currentPeer;
 
 // we need a consistent interface to handle the datachannel messages like we have for the websocket, for now abstract it to here and we can fix it later
 
-var handlePeerMessage = function (m, dataChannel) {
-	console.log('got peer message');
+// var handlePeerMessage = function (m, dataChannel) {
+// 	console.log('got peer message');
 
-	var message = JSON.parse(m.data);
+// 	var message = JSON.parse(m.data);
 
-	if (message.Instructions.Command==='resourceRequest') {
-		var dataset = localDataSets.retrieve(message.Instructions.Body);
+// 	if (message.Instructions.Command==='resourceRequest') {
+// 		var dataset = localDataSets.retrieve(message.Instructions.Body);
 
-		var response = {
-			"SenderID": userid,
-			"RecipientID" : message.SenderID,
-			"Instructions" : {
-				"Command" : 'resourceResponse',
-				"Body" : dataset.slice(0, 10)
-			}
-		}
+// 		var response = {
+// 			"SenderID": userid,
+// 			"RecipientID" : message.SenderID,
+// 			"Instructions" : {
+// 				"Command" : 'resourceResponse',
+// 				"Body" : dataset.slice(0, 10)
+// 			}
+// 		}
 
-		var responsePackage = JSON.stringify(response);
-		dataChannel.send(responsePackage);
+// 		var responsePackage = JSON.stringify(response);
+// 		dataChannel.send(responsePackage);
 
-	} else if (message.Instructions.Command==='resourceResponse') {
-		// var dataset = JSON.parse(message.Body);
-		var dataset = message.Instructions.Body;
-		// console.log(dataset);
-	}
+// 	} else if (message.Instructions.Command==='resourceResponse') {
+// 		// var dataset = JSON.parse(message.Body);
+// 		var dataset = message.Instructions.Body;
+// 		// console.log(dataset);
+// 	}
 
-	
-
-};
+// };
 
 
 
@@ -75,19 +73,27 @@ var startRTCConnection = function (targetPeerID) {
 	// -----------------------------------
 	peerConnection = new webkitRTCPeerConnection(iceServers, optionalRtpDataChannels);
 	peerConnections[targetPeerID] = peerConnection;
-	var dataChannel = peerConnection.createDataChannel('RTCDataChannel', {reliable: false});
 
-	var dataChannelOpenHandler = dataChannel.addEventListener('open', function (m) {
-		dataChannels[targetPeerID] = this;
-		console.log('datachannel open');
+	// var dataChannel = peerConnection.createDataChannel('RTCDataChannel', {reliable: false});
+	var baseDataChannel = peerConnection.createDataChannel('RTCDataChannel', {reliable: false});
 
+	var dataChannel = new ReliableChannel(baseDataChannel);
+
+	// var dataChannelOpenHandler = dataChannel.addEventListener('open', function (m) {
+	// 	dataChannels[targetPeerID] = this;
+	// 	console.log('datachannel open');
+
+	// });
+
+	var dataChannelOpenHandler = baseDataChannel.addEventListener('open', function (m) {
+		dataChannels[targetPeerID] = dataChannel;
+		console.log('reliable dataChannel open');
 	});
 
-	var dataChannelMessageHandler = dataChannel.addEventListener('message', function (m) {
-		// pass in a reference to the datachannel so the callback can respond to sender.
-		handlePeerMessage(m, this);
-	});
-
+	// var dataChannelMessageHandler = dataChannel.addEventListener('message', function (m) {
+	// 	// pass in a reference to the datachannel so the callback can respond to sender.
+	// 	handlePeerMessage(m, this);
+	// });
 
 	peerConnection.onicecandidate = function (candidate) {
 		eventer.send(targetPeerID, {
